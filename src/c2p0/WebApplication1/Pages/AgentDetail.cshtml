@@ -1,0 +1,10 @@
+﻿@page "/Agents/{Guid}"
+@using c2p0.Lib.Models;
+@model c2p0.Web.Pages.AgentDetailModel
+@{
+    IAgent agent = ViewData["agent"] as IAgent;
+}
+
+<h1>Agent Details</h1>
+<h5>@agent.AgentGuid</h5>
+

@@ -15,7 +15,7 @@
         @foreach (IAgent agent in ViewData["agents"] as List<IAgent>)
         {
             <tr>
-                <td>@agent.AgentGuid</td>
+                <td><a href="/Agents/@agent.AgentGuid">@agent.AgentGuid</a></td>
                 <td>@agent.ListenerGuid</td>
             </tr>
         }

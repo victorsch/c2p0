@@ -13,6 +13,7 @@ namespace c2p0.Lib.Interfaces
         public void AddListener(IListener listener);
         public bool RemoveListener(IListener listener);
         public IListener GetListener(string guid);
+        public void StartListener(string guid);
     }
     public class ListenerManager : IListenerManager
     {
@@ -35,6 +36,13 @@ namespace c2p0.Lib.Interfaces
         public IListener GetListener(string guid)
         {
             return Listeners.FirstOrDefault(x => x.ListenerGuid == guid);
+        }
+
+        public void StartListener(string guid)
+        {
+            var listener = Listeners.FirstOrDefault(x => x.ListenerGuid == guid);
+
+            listener.Start();
         }
     }
 }

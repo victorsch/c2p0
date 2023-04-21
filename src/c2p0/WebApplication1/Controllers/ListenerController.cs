@@ -40,6 +40,7 @@ namespace c2p0.Web.Controllers
 
             var job = jobManager.GetJob(agentGuid);
 
+            if (job == null) return Ok();
             return Ok(new Dictionary<string, string>()
             {
                 { "id", job.JobGuid },

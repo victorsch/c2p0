@@ -12,7 +12,8 @@ namespace c2p0.Lib.Interfaces
         public List<IJob> Jobs { get; set; }
         public List<IJob> GetJobs();
         public IJob GetJob(string agentGuid);
-        public void CreateJob(string agentGuid, string command);
+        public IJob GetJobByGuid(string jobGuid);
+        public Job CreateJob(string agentGuid, string command);
         public void CompleteJob(string jobGuid, string agentGuid, string response);
     }
 
@@ -27,14 +28,24 @@ namespace c2p0.Lib.Interfaces
         {
             return Jobs.FirstOrDefault(x => !x.Completed && x.AgentGuid == agentGuid);
         }
-        public void CreateJob(string agentGuid, string command)
+
+        public IJob GetJobByGuid(string jobGuid)
         {
-            Jobs.Add(new Job()
+            return Jobs.FirstOrDefault(x => x.JobGuid == jobGuid);
+        }
+
+        public Job CreateJob(string agentGuid, string command)
+        {
+            var job = new Job()
             {
                 JobGuid = Guid.NewGuid().ToString(),
                 AgentGuid = agentGuid,
                 Command = command
-            });
+            };
+
+            Jobs.Add(job);
+
+            return job;
         }
         public void CompleteJob(string jobGuid, string agentGuid, string response)
         {
