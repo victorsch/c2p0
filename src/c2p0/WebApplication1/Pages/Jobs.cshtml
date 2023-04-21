@@ -1,0 +1,37 @@
+﻿
+@page
+@using c2p0.Lib.Models;
+@model c2p0.Web.Pages.JobsModel
+@{
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Guid</th>
+            <th scope="col">Command</th>
+            <th scope="col">Response</th>
+            <th scope="col">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (IJob job in ViewData["jobs"] as List<IJob>)
+        {
+            <tr>
+                <td>@job.JobGuid</td>
+                <td>@job.Command</td>
+                <td>@job.Response</td>
+                <td>
+                    @if (job.Completed)
+                    {
+                        <span class="badge bg-success">COMPLETE</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">INCOMPLETE</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

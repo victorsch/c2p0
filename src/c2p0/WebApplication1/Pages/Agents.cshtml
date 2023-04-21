@@ -1,0 +1,23 @@
+﻿@page
+@using c2p0.Lib.Models;
+@model c2p0.Web.Pages.AgentsModel
+@{
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Agent</th>
+            <th scope="col">Listener</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (IAgent agent in ViewData["agents"] as List<IAgent>)
+        {
+            <tr>
+                <td>@agent.AgentGuid</td>
+                <td>@agent.ListenerGuid</td>
+            </tr>
+        }
+    </tbody>
+</table>
