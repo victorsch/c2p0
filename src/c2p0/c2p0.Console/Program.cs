@@ -34,8 +34,8 @@ namespace c2p0.Console
 
         public static void ListAgents(IAgentManager am)
         {
-            System.Console.WriteLine("Agent                 Listener        ");
-            System.Console.WriteLine("--------------------------------------");
+            System.Console.WriteLine("Agent                                             Listener                       ");
+            System.Console.WriteLine("---------------------------------------------------------------------------------");
             var agents = am.GetAgents();
 
             foreach (var agent in agents)
@@ -123,7 +123,7 @@ namespace c2p0.Console
 
             System.Console.ForegroundColor = ConsoleColor.DarkRed;
             System.Console.WriteLine(" ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄  ");
-            System.Console.WriteLine("▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌ ▐░░░░░░░░░▌");
+            System.Console.WriteLine("▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌ ▐░░░░░░░░░▌ ");
             System.Console.WriteLine("▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░█░█▀▀▀▀▀█░▌");
             System.Console.WriteLine("▐░▌                    ▐░▌▐░▌       ▐░▌▐░▌▐░▌    ▐░▌");
             System.Console.WriteLine("▐░▌                    ▐░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌ ▐░▌   ▐░▌");
