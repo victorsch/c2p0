@@ -28,8 +28,8 @@ namespace c2p0.SampleAgent
 
         private static async Task<Job> GetJob()
         {
-            //string request = baseAddress + "/?df2f1f3f8h6h4=n&agentGuid=" + agentGuid;
-            string request = baseAddress + "/?" + Guid.NewGuid().ToString() + "=n&agentGuid=" + agentGuid;
+            string request = baseAddress + "/?df2f1f3f8h6h4=n&agentGuid=" + agentGuid;
+            //string request = baseAddress + "/?" + Guid.NewGuid().ToString() + "=n&agentGuid=" + agentGuid;
             var response = client.GetStringAsync(request);
 
             var msg = await response;
