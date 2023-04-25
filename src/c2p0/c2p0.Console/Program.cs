@@ -46,6 +46,18 @@ namespace c2p0.Console
             }
         }
 
+        public static void ListJobs(IJobManager jm){
+            System.Console.WriteLine("Jobs");
+            System.Console.WriteLine("-------------------------");
+
+            var jobs = jm.GetJobs();
+
+            foreach (var job in jobs){
+                System.Console.WriteLine(job.Command, job.Response);
+            }
+
+        }
+
         public static void CreateListener(IListenerManager lm, IAgentManager am, IJobManager jm, string name, int port)
         {
             DemoListener dl = new DemoListener();
@@ -110,6 +122,7 @@ namespace c2p0.Console
                     ListAgents(am);
                     break;
                 case "lj":
+                    ListJobs(jm);
                     break;
                 case "ca":
                     EnterAgentShell(lm, am, jm, commandTokens[1]);

