@@ -66,7 +66,8 @@ namespace c2p0.Web.Lib
             app.UseRouting();
             app.UseDeveloperExceptionPage();
             app.UseEndpoints(endpoint => {
-                endpoint.MapControllerRoute("/", "/", new { controller = "Listener", action = "Handshake" });
+                endpoint.MapControllerRoute("/", "/", new { controller = "Listener", action = "Index" });
+                endpoint.MapControllerRoute("/Handshake", "/Handshake", new { controller = "Listener", action = "Handshake" });
                 endpoint.MapControllerRoute("/GetJob", "/GetJob", new { controller = "Listener", action = "GetJob" });
                 endpoint.MapControllerRoute("/CompleteJob", "/CompleteJob", new { controller = "Listener", action = "CompleteJob" });
             });
@@ -92,6 +93,5 @@ namespace c2p0.Web.Lib
         {
             throw new NotImplementedException();
         }
-
     }
 }

@@ -6,6 +6,7 @@ using c2p0.Lib.Interfaces;
 using c2p0.Web;
 using c2p0.Web.Lib;
 using c2p0.Lib.Models;
+using c2p0.Lib;
 
 namespace c2p0.Console
 {
@@ -18,6 +19,7 @@ namespace c2p0.Console
             System.Console.WriteLine("la - List Agents");
             System.Console.WriteLine("lj <agent> - List Jobs for Agent");
             System.Console.WriteLine("ca <agent> - Enter shell for agent");
+            System.Console.WriteLine("create-agent <listener>");
         }
 
         public static void ListListeners(IListenerManager lm)
@@ -63,9 +65,13 @@ namespace c2p0.Console
             while (inShell)
             {
                 bool awaitingCompletion = true;
+                System.Console.ForegroundColor = ConsoleColor.DarkRed;
                 System.Console.Write("{0}>$ ", agent.AgentGuid);
+                System.Console.ResetColor();
 
+                System.Console.ForegroundColor = ConsoleColor.DarkYellow;
                 string command = System.Console.ReadLine();
+                System.Console.ResetColor();
                 var job = jm.CreateJob(agent.AgentGuid, command);
                 while (awaitingCompletion)
                 {
@@ -76,9 +82,13 @@ namespace c2p0.Console
                         System.Console.WriteLine(job.Response);
                     }
                 }
-
             }
-            
+        }
+
+        public static void CreateAgent(IListenerManager lm, IAgentManager am, IJobManager jm, string[] commandTokens)
+        {
+            Lib.Interfaces.Generator g = new Generator();
+            g.Compile(@"C:\Users\Victor\source\repos\c2p0\src\c2p0\c2p0.SampleAgent\Program.cs", "testpublickey");
         }
 
         public static void HandleCommand(IListenerManager lm, IAgentManager am, IJobManager jm, string command)
@@ -104,7 +114,9 @@ namespace c2p0.Console
                 case "ca":
                     EnterAgentShell(lm, am, jm, commandTokens[1]);
                     break;
-
+                case "create-agent":
+                    CreateAgent(lm, am, jm, commandTokens);
+                    break;
             }
         }
 
@@ -140,6 +152,8 @@ namespace c2p0.Console
             System.Console.WriteLine("____________________________________________________________________________");
             System.Console.WriteLine("____________________________________________________________________________");
             System.Console.ResetColor();
+
+            HandleCommand(listenerManager, agentManager, jobManager, "nhl test 7869");
 
             while (true)
             {

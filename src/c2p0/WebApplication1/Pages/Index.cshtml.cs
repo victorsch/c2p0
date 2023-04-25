@@ -22,11 +22,11 @@ namespace WebApplication1.Pages
 
         public void OnGet()
         {
-            DemoListener dl = new DemoListener();
-            dl.Init("test", 7869, agentManager, jobManager);
-            dl.Start();
+            //DemoListener dl = new DemoListener();
+            //dl.Init("test", 7869, agentManager, jobManager);
+            //dl.Start();
 
-            listenerManager.AddListener(dl);
+            //listenerManager.AddListener(dl);
         }
     }
 }

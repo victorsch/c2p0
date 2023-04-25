@@ -18,7 +18,14 @@ namespace c2p0.Web.Controllers
         }
         public ActionResult Index()
         {
-            return Ok("thanks");
+            var key = HttpContext.Request.Query.Keys.FirstOrDefault();
+            var query = HttpContext.Request.Query;
+            if (HttpContext.Request.Query.TryGetValue(key, out Microsoft.Extensions.Primitives.StringValues comm))
+            {
+                var rsp = Lib.CommHelper.HandleAgentCommunication(agentManager, jobManager, listener, key, comm.ToString(), query);
+                return Ok(rsp);
+            }
+            return Ok();
         }
         public ActionResult Handshake(string agentGuid, string hostName)
         {
