@@ -2,3 +2,5 @@
 .vs/*
 c2p0.Lib/obj/*
 src/c2p0/c2p0.Console/obj/Debug/net6.0/c2p0.Console.assets.cache
+bin/
+obj/
