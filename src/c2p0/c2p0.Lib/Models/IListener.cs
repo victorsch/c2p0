@@ -14,7 +14,9 @@ namespace c2p0.Lib.Models
         public int Port { get; set; }
         public bool Running { get; set; }
         public List<IAgent> Communicants { get; set; }
-        public bool Init(string name, int port, IAgentManager am, IJobManager jm);
+        public string Key { get; set; }
+        public byte[] Iv { get; set; }
+        public bool Init(string name, int port, IAgentManager am, IJobManager jm, string key, byte[] iv);
         public bool Start();
         public bool Stop();
         public bool AddCommunicant(IAgent agent);

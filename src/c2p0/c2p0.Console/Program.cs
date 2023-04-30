@@ -7,6 +7,7 @@ using c2p0.Web;
 using c2p0.Web.Lib;
 using c2p0.Lib.Models;
 using c2p0.Lib;
+using System.Security.Cryptography;
 
 namespace c2p0.Console
 {
@@ -60,8 +61,15 @@ namespace c2p0.Console
 
         public static void CreateListener(IListenerManager lm, IAgentManager am, IJobManager jm, string name, int port)
         {
+            byte[] key, iv;
+            using (Aes aesAlg = Aes.Create())
+            {
+                key = aesAlg.Key;
+                iv = aesAlg.IV;
+            }
+
             DemoListener dl = new DemoListener();
-            dl.Init(name, port, am, jm);
+            dl.Init(name, port, am, jm, Convert.ToBase64String(key), iv);
 
             lm.AddListener(dl);
 
@@ -97,10 +105,13 @@ namespace c2p0.Console
             }
         }
 
-        public static void CreateAgent(IListenerManager lm, IAgentManager am, IJobManager jm, string[] commandTokens)
+        public async static void CreateAgent(IListenerManager lm, IAgentManager am, IJobManager jm, string[] commandTokens)
         {
             Lib.Interfaces.Generator g = new Generator();
-            g.Compile(@"C:\Users\Victor\source\repos\c2p0\src\c2p0\c2p0.SampleAgent\Program.cs", "testpublickey");
+            var listener = lm.GetListener(commandTokens[1]);
+            string outpath = await g.Compile(Convert.FromBase64String(listener.Key), listener.Iv);
+
+            System.Console.WriteLine($"Agent has been generated at {outpath}");
         }
 
         public static void HandleCommand(IListenerManager lm, IAgentManager am, IJobManager jm, string command)
@@ -170,6 +181,12 @@ namespace c2p0.Console
 
             while (true)
             {
+                var test = System.Console.IsInputRedirected;
+                var test2 = System.Console.IsOutputRedirected;
+                var test3 = System.Console.IsErrorRedirected;
+                System.Console.OpenStandardInput();
+                System.Console.OpenStandardOutput();
+                System.Console.OpenStandardError();
                 System.Console.Write("c2p0>$ ");
                 string command = System.Console.ReadLine();
 

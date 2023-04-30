@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
@@ -11,8 +11,8 @@ namespace c2p0.SampleAgent
         // Default listener I created on web server
         static string baseAddress = "http://localhost:7869";
         static string agentGuid = Guid.NewGuid().ToString();
-        static string b64Key = "{B64KEY}";
-        static string b64Iv = "{B64IV}";
+        static string b64Key = "5pSrJvmwgcPrb2cUPi79r0p4mAVMoiEVRmAHDFr1Atk=";
+        static string b64Iv = "wvplA2MgU/gxEbehIVCh/A==";
 
         internal static string Decrypt(string cipherText)
         {

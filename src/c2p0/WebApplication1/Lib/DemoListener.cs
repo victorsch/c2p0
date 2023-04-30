@@ -17,9 +17,11 @@ namespace c2p0.Web.Lib
         public int Port { get; set; }
         public bool Running { get; set; } = false;
         public List<IAgent> Communicants { get; set; }
+        public string Key { get; set; }
+        public byte[] Iv { get; set; }
 
         public CancellationTokenSource _cancelToken;
-        public bool Init(string name, int port, IAgentManager am, IJobManager jm)
+        public bool Init(string name, int port, IAgentManager am, IJobManager jm, string key, byte[] iv)
         {
             ListenerGuid = Guid.NewGuid().ToString();
             Name = name;
@@ -27,6 +29,8 @@ namespace c2p0.Web.Lib
             AgentManager = am;
             JobManager = jm;
             Self = this;
+            Key = key;
+            Iv = iv;
             return true;
         }
 
@@ -55,10 +59,13 @@ namespace c2p0.Web.Lib
 
         private void ConfigureServices(IServiceCollection services)
         {
+
             services.AddControllers();
             services.AddSingleton(Self);
             services.AddSingleton(AgentManager);
             services.AddSingleton(JobManager);
+            services.AddSingleton(Key);
+            services.AddSingleton(Iv);
         }
 
         private void ConfigureApplication(IApplicationBuilder app)

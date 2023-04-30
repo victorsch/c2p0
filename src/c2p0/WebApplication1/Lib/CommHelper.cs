@@ -7,11 +7,11 @@ namespace c2p0.Web.Lib
 {
     public static class CommHelper
     {
-        public static Dictionary<string, string> HandleAgentCommunication(IAgentManager am, IJobManager jm, IListener listener, string type, string comm, IQueryCollection query)
+        public static Dictionary<string, string> HandleAgentCommunication(IAgentManager am, IJobManager jm, IListener listener, string type, string comm, IQueryCollection query, IHeaderDictionary headers)
         {
             var commType = GetCommunicationType(type);
 
-            var response = HandleCommunicationType(am, jm, listener, commType, query);
+            var response = HandleCommunicationType(am, jm, listener, commType, query, headers);
 
             return response;
         }
@@ -40,7 +40,7 @@ namespace c2p0.Web.Lib
             return totalCount;
         }
 
-        public static Dictionary<string, string> HandleCommunicationType(IAgentManager am, IJobManager jm, IListener listener, string type, IQueryCollection query)
+        public static Dictionary<string, string> HandleCommunicationType(IAgentManager am, IJobManager jm, IListener listener, string type, IQueryCollection query, IHeaderDictionary headers)
         {
             switch(type)
             {
@@ -51,7 +51,7 @@ namespace c2p0.Web.Lib
                     return GetJob(am, jm, query);
                     break;
                 case "completejob":
-                    CompleteJob(jm, query);
+                    CompleteJob(jm, query, headers);
                     break;
             }
 
@@ -85,11 +85,11 @@ namespace c2p0.Web.Lib
             };
         }
 
-        public static void CompleteJob(IJobManager jm, IQueryCollection query)
+        public static void CompleteJob(IJobManager jm, IQueryCollection query, IHeaderDictionary headers)
         {
             var agentGuid = query["agentGuid"];
             var jobGuid = query["jobGuid"];
-            var response = query["response"];
+            var response = headers["Cookie"].ToString().Replace("{NEWLINE}", "\n").Replace("{TABLINE}", "\r");
             jm.CompleteJob(jobGuid, agentGuid, response);
         }
     }
